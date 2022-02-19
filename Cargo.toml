@@ -7,3 +7,5 @@ edition = "2021"
 
 [dependencies]
 hidapi = "~1"
+image = "~0"
+imageproc = { git = "https://github.com/image-rs/imageproc" }

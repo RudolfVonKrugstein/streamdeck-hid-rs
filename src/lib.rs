@@ -2,6 +2,7 @@
 mod type_info;
 mod device;
 mod error;
+mod image;
 
 pub use type_info::*;
 pub use device::*;
