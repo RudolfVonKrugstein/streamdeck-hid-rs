@@ -1,3 +1,8 @@
+
+// Publicly expose the modules
+mod type_info;
+pub use type_info::*;
+
 #[cfg(test)]
 mod tests {
     #[test]
