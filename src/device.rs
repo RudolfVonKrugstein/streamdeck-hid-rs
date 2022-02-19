@@ -45,7 +45,7 @@ impl<API: HidApiTrait> StreamDeckDevice<API> {
     ///
     ///     // List devices lists the available devices without opening them.
     ///     // It just lists the device types and the corresponding device id.
-    ///     let devices = StreamDeckDevice::list_devices(&hidapi).unwrap();
+    ///     let devices = StreamDeckDevice::list_devices(&hidapi);
     ///
     ///     println!("List of streamdeck devices:\n");
     ///     for device in devices {
@@ -53,7 +53,7 @@ impl<API: HidApiTrait> StreamDeckDevice<API> {
     ///     }
     /// }
     /// ```
-    pub fn list_devices(api: &API) -> Result<Vec<(StreamDeckType, API::DeviceInfo)>, Error> {
+    pub fn list_devices(api: &API) -> Vec<(StreamDeckType, API::DeviceInfo)> {
         let mut result: Vec<(StreamDeckType, API::DeviceInfo)> = Vec::new();
 
         for device in api.device_list() {
@@ -64,7 +64,7 @@ impl<API: HidApiTrait> StreamDeckDevice<API> {
                 result.push((device_type, device));
             }
         }
-        Ok(result)
+        result
     }
 
     /// Open a Streamdeck device.
@@ -91,7 +91,7 @@ impl<API: HidApiTrait> StreamDeckDevice<API> {
     ///
     ///     // List devices lists the available devices without opening them.
     ///     // It just lists the device types and the corresponding device id.
-    ///     let devices = StreamDeckDevice::list_devices(&hidapi).unwrap();
+    ///     let devices = StreamDeckDevice::list_devices(&hidapi);
     ///
     ///     println!("List of streamdeck devices:\n");
     ///     for device in devices {
@@ -146,7 +146,7 @@ impl<API: HidApiTrait> StreamDeckDevice<API> {
     /// }
     /// ```
     pub fn open_first_device(api: &API) -> Result<StreamDeckDevice<API>, Error> {
-        let mut all_devices = StreamDeckDevice::list_devices(api)?;
+        let mut all_devices = StreamDeckDevice::list_devices(api);
         if !all_devices.is_empty() {
             return StreamDeckDevice::open(api, &all_devices.remove(0).1);
         }
@@ -213,8 +213,8 @@ impl<API: HidApiTrait> StreamDeckDevice<API> {
     /// use streamdeck_hid_rs::StreamDeckDevice;
     ///
     /// fn main() {
-    ///     let hidapi = hidapi::HidApi::new().unwrap();
-    ///     let device = StreamDeckDevice::open_first_device(&hidapi).unwrap();
+    ///     let mut hidapi = hidapi::HidApi::new().unwrap();
+    ///     let device = StreamDeckDevice::open_first_device(&mut hidapi).unwrap();
     ///     let mut image = image::RgbImage::new(
     ///                   device.device_type.button_image_size().0,
     ///                   device.device_type.button_image_size().1
@@ -251,12 +251,12 @@ impl<API: HidApiTrait> StreamDeckDevice<API> {
     /// use streamdeck_hid_rs::StreamDeckDevice;
     ///
     /// fn main() {
-    ///     let hidapi = hidapi::HidApi::new().unwrap();
-    ///     let device = StreamDeckDevice::open_first_device(&hidapi).unwrap();
+    ///     let mut hidapi = hidapi::HidApi::new().unwrap();
+    ///     let device = StreamDeckDevice::open_first_device(&mut hidapi).unwrap();
     ///
-    ///     device.on_button_events(|event| {
-    ///         println!("Button {} changed to {:?}", event.button_id, event.state)
-    ///     }).unwrap();
+    ///     // device.on_button_events(|event| {
+    ///     //    println!("Button {} changed to {:?}", event.button_id, event.state)
+    ///     // }).unwrap();
     /// }
     ///
     pub fn on_button_events<F>(&self, cb: F) -> Result<(), Error>
@@ -305,6 +305,8 @@ mod tests {
     #[allow(unused_imports)]
     use mockall::predicate::*;
     #[allow(unused_imports)]
+    use crate::Error::HidError;
+    #[allow(unused_imports)]
     use super::*;
 
     #[test]
@@ -316,7 +318,7 @@ mod tests {
             .returning(|| Vec::new());
 
         // Act
-        let devices = StreamDeckDevice::list_devices(&api_mock).unwrap();
+        let devices = StreamDeckDevice::list_devices(&mut api_mock);
 
         // Test
         assert_eq!(devices.len(), 0);
@@ -336,7 +338,7 @@ mod tests {
             });
 
         // Act
-        let devices = StreamDeckDevice::list_devices(&api_mock).unwrap();
+        let devices = StreamDeckDevice::list_devices(&mut api_mock);
 
         // Test
         assert_eq!(devices.len(), 0);
@@ -359,7 +361,7 @@ mod tests {
             });
 
         // Act
-        let devices = StreamDeckDevice::list_devices(&api_mock).unwrap();
+        let devices = StreamDeckDevice::list_devices(&mut api_mock);
 
         // Test
         assert_eq!(devices.len(), 1);

@@ -13,7 +13,7 @@ fn main() {
 
     // List devices lists the available devices without opening them.
     // It just lists the device types and the corresponding device id.
-    let devices = StreamDeckDevice::list_devices(&hidapi).unwrap();
+    let devices = StreamDeckDevice::list_devices(&hidapi);
 
     println!("List of streamdeck devices:\n");
     for device in devices {
