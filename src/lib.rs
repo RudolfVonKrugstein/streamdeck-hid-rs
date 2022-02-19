@@ -1,6 +1,11 @@
 // Publicly expose the modules
 mod type_info;
+mod device;
+mod error;
+
 pub use type_info::*;
+pub use device::*;
+pub use error::*;
 
 #[cfg(test)]
 mod tests {
