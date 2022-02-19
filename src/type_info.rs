@@ -5,7 +5,6 @@
 //!
 //! The type of the streamdeck is defined in the enum [StreamDeckType]
 
-
 /// Type of Streamdeck device.
 ///
 /// This enum defined the types of Streamdeck devices known to this library.
@@ -36,7 +35,7 @@ impl StreamDeckType {
             StreamDeckType::Xl => "Streamdeck XL",
             StreamDeckType::OrigV2 => "Streamdeck (original v2)",
             StreamDeckType::Orig => "Streamdeck original",
-            StreamDeckType::Mini => "Streamdeck Mini"
+            StreamDeckType::Mini => "Streamdeck Mini",
         }
     }
 
@@ -46,10 +45,10 @@ impl StreamDeckType {
     /// the second the number of columns.
     pub fn num_buttons(&self) -> (u32, u32) {
         match *self {
-            StreamDeckType::Xl => (4,8),
-            StreamDeckType::OrigV2 => (3,5),
-            StreamDeckType::Orig => (3,5),
-            StreamDeckType::Mini => (2,3)
+            StreamDeckType::Xl => (4, 8),
+            StreamDeckType::OrigV2 => (3, 5),
+            StreamDeckType::Orig => (3, 5),
+            StreamDeckType::Mini => (2, 3),
         }
     }
 
@@ -65,7 +64,7 @@ impl StreamDeckType {
             StreamDeckType::Xl => StreamDeckImageFormat::Jpeg,
             StreamDeckType::OrigV2 => StreamDeckImageFormat::Jpeg,
             StreamDeckType::Orig => StreamDeckImageFormat::Bmp,
-            StreamDeckType::Mini => StreamDeckImageFormat::Bmp
+            StreamDeckType::Mini => StreamDeckImageFormat::Bmp,
         }
     }
 
@@ -74,10 +73,10 @@ impl StreamDeckType {
     /// The size is returned as tuple for expected width and height of the image.
     pub fn button_image_size(&self) -> (u32, u32) {
         match *self {
-            StreamDeckType::Xl => (96,96),
-            StreamDeckType::OrigV2 => (72,72),
-            StreamDeckType::Orig => (72,72),
-            StreamDeckType::Mini => (80,80)
+            StreamDeckType::Xl => (96, 96),
+            StreamDeckType::OrigV2 => (72, 72),
+            StreamDeckType::Orig => (72, 72),
+            StreamDeckType::Mini => (80, 80),
         }
     }
 }
@@ -97,10 +96,10 @@ mod test {
 
     #[test]
     fn test_num_buttons() {
-        assert_eq!(StreamDeckType::Xl.num_buttons(), (4,8));
-        assert_eq!(StreamDeckType::OrigV2.num_buttons(), (3,5));
-        assert_eq!(StreamDeckType::Orig.num_buttons(), (3,5));
-        assert_eq!(StreamDeckType::Mini.num_buttons(), (2,3));
+        assert_eq!(StreamDeckType::Xl.num_buttons(), (4, 8));
+        assert_eq!(StreamDeckType::OrigV2.num_buttons(), (3, 5));
+        assert_eq!(StreamDeckType::Orig.num_buttons(), (3, 5));
+        assert_eq!(StreamDeckType::Mini.num_buttons(), (2, 3));
     }
 
     #[test]
@@ -113,17 +112,29 @@ mod test {
 
     #[test]
     fn test_button_image_format() {
-        assert_eq!(StreamDeckType::Xl.button_image_format(), StreamDeckImageFormat::Jpeg);
-        assert_eq!(StreamDeckType::OrigV2.button_image_format(), StreamDeckImageFormat::Jpeg);
-        assert_eq!(StreamDeckType::Orig.button_image_format(), StreamDeckImageFormat::Bmp);
-        assert_eq!(StreamDeckType::Mini.button_image_format(), StreamDeckImageFormat::Bmp);
+        assert_eq!(
+            StreamDeckType::Xl.button_image_format(),
+            StreamDeckImageFormat::Jpeg
+        );
+        assert_eq!(
+            StreamDeckType::OrigV2.button_image_format(),
+            StreamDeckImageFormat::Jpeg
+        );
+        assert_eq!(
+            StreamDeckType::Orig.button_image_format(),
+            StreamDeckImageFormat::Bmp
+        );
+        assert_eq!(
+            StreamDeckType::Mini.button_image_format(),
+            StreamDeckImageFormat::Bmp
+        );
     }
 
     #[test]
     fn test_button_image_size() {
-        assert_eq!(StreamDeckType::Xl.button_image_size(), (96,96));
-        assert_eq!(StreamDeckType::OrigV2.button_image_size(), (72,72));
-        assert_eq!(StreamDeckType::Orig.button_image_size(), (72,72));
-        assert_eq!(StreamDeckType::Mini.button_image_size(), (80,80));
+        assert_eq!(StreamDeckType::Xl.button_image_size(), (96, 96));
+        assert_eq!(StreamDeckType::OrigV2.button_image_size(), (72, 72));
+        assert_eq!(StreamDeckType::Orig.button_image_size(), (72, 72));
+        assert_eq!(StreamDeckType::Mini.button_image_size(), (80, 80));
     }
 }
