@@ -83,9 +83,95 @@ pub fn image_packages(device_type: StreamDeckType, image: &RgbImage, btn_index: 
 }
 
 mod tests {
+    #[allow(unused_imports)]
+    use super::*;
+    #[allow(unused_imports)]
+    use crate::StreamDeckType;
+
     #[test]
-    fn test_image_packages() {
-        todo!();
+    fn test_image_packer_accept_correct_dimensions() {
+        for device_type in StreamDeckType::ALL {
+            let image = image::RgbImage::new(
+              device_type.button_image_size().0,
+                device_type.button_image_size().1
+            );
+            assert!(image_packages(device_type, &image, 1).is_ok());
+        }
     }
 
+    #[test]
+    fn test_image_packer_fail_incorrect_dimensions() {
+        for device_type in StreamDeckType::ALL {
+            let image = image::RgbImage::new(
+                device_type.button_image_size().0 + 1,
+                device_type.button_image_size().1 + 1
+            );
+            assert!(image_packages(device_type, &image, 1).is_err());
+        }
+    }
+
+    #[test]
+    fn test_image_packer_header() {
+        for device_type in StreamDeckType::ALL {
+            let image = image::RgbImage::new(
+                device_type.button_image_size().0,
+                device_type.button_image_size().1
+            );
+            let correct_header = device_type.image_package_header(0, 0, 0);
+            let packages = image_packages(device_type, &image, 1).unwrap();
+            assert_eq!(packages[0][0], correct_header[0]);
+            assert_eq!(packages[0][0], correct_header[0]);
+        }
+    }
+
+    #[test]
+    fn test_image_packer_encoding() {
+        for device_type in StreamDeckType::ALL {
+            let image = image::RgbImage::new(
+                device_type.button_image_size().0,
+                device_type.button_image_size().1
+            );
+            let correct_header = device_type.image_package_header(0, 0, 0);
+            let packages = image_packages(device_type.clone(), &image, 1).unwrap();
+
+            // We just test if the first bytes are correctly set
+            match &device_type.button_image_format() {
+                StreamDeckImageFormat::Bmp => {
+                    assert_eq!(packages[0][correct_header.len() + 0],66);
+                    assert_eq!(packages[0][correct_header.len() + 1], 77);
+                },
+                StreamDeckImageFormat::Jpeg => {
+                    assert_eq!(packages[0][correct_header.len() + 0], 255);
+                    assert_eq!(packages[0][correct_header.len() + 1], 216);
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn test_image_packer_num_pages() {
+        for device_type in StreamDeckType::ALL {
+            let image = image::RgbImage::new(
+                device_type.button_image_size().0,
+                device_type.button_image_size().1
+            );
+
+            let packages = image_packages(device_type.clone(), &image, 1).unwrap();
+
+            match &device_type {
+                StreamDeckType::Xl => {
+                   assert_eq!(packages.len(), 1)
+                },
+                StreamDeckType::OrigV2 => {
+                    assert_eq!(packages.len(), 1)
+                },
+                StreamDeckType::Orig => {
+                    assert_eq!(packages.len(), 2)
+                },
+                StreamDeckType::Mini => {
+                    assert_eq!(packages.len(), 3)
+                }
+            }
+        }
+    }
 }
