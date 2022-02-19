@@ -10,7 +10,7 @@ use std::cmp::min;
 /// Type of Streamdeck device.
 ///
 /// This enum defined the types of Streamdeck devices known to this library.
-#[derive(PartialEq, Debug)]
+#[derive(PartialEq, Debug, Clone)]
 pub enum StreamDeckType {
     Xl,
     OrigV2,

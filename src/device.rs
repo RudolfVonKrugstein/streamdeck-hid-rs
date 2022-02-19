@@ -1,9 +1,10 @@
+use image::RgbImage;
 use crate::StreamDeckType;
 use crate::Error;
-
+use crate::image::image_packages;
 
 pub struct StreamDeckDevice {
-    device_type: StreamDeckType,
+    pub device_type: StreamDeckType,
     hid_device: hidapi::HidDevice,
 }
 
@@ -186,6 +187,43 @@ impl StreamDeckDevice {
         ).map_err(|e| Error::HidError(e))?;
         Ok(())
     }
+
+    /// Set the image for a button!
+    ///
+    /// Changes the image on a specific button.
+    ///
+    /// # Example
+    /// ```
+    /// use streamdeck_hid_rs::StreamDeckDevice;
+    ///
+    /// fn main() {
+    ///     let hidapi = hidapi::HidApi::new().unwrap();
+    ///     let device = StreamDeckDevice::open_first_device(&hidapi).unwrap();
+    ///     let mut image = image::RgbImage::new(
+    ///                   device.device_type.button_image_size().0,
+    ///                   device.device_type.button_image_size().1
+    ///     );
+    ///     // Do something with image
+    ///
+    ///     device.set_button_image(0, &image);
+    ///     // More things with the device
+    /// }
+    /// ```
+    pub fn set_button_image(&self, button_id: u8, image: &RgbImage) -> Result<(), Error> {
+        let image_packages = image_packages(
+            self.device_type.clone(),
+            image,
+            button_id)?;
+        for image_package in image_packages {
+            let image_package_len = image_package.len();
+            let result = self.hid_device.write(&image_package)
+                .map_err(|e| Error::HidError(e))?;
+            if result != image_package_len {
+                return Err(Error::IncorrectWriteLengthError)
+            }
+        }
+        Ok(())
+    }
 }
 
 mod test {
@@ -204,6 +242,11 @@ mod test {
 
     #[test]
     fn test_reset() {
+        todo!();
+    }
+
+    #[test]
+    fn test_set_button_image() {
         todo!();
     }
 }

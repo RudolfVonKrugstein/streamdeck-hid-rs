@@ -5,4 +5,5 @@ pub enum Error {
     HidError(hidapi::HidError),
     DimensionMismatch(u32,u32),
     ImageEncodingError(image::ImageError),
+    IncorrectWriteLengthError
 }
