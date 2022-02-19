@@ -14,6 +14,6 @@ readme = "README.md"
 [dependencies]
 hidapi = "~1"
 image = "~0"
-imageproc = { git = "https://github.com/image-rs/imageproc" }
+imageproc = "~0"
 log = "~0"
 mockall = "~0"
