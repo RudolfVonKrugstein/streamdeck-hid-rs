@@ -29,7 +29,15 @@ pub enum StreamDeckImageFormat {
 /// The implementation of the [StreamDeckType] provides
 /// functions to get information specific to the StreamDeck type.
 impl StreamDeckType {
-    //! The name of the Streamdeck type, as human readable string (english).
+    /// List of ALL possible types
+    const ALL: [StreamDeckType; 4] = [
+        StreamDeckType::Xl,
+        StreamDeckType::OrigV2,
+        StreamDeckType::Orig,
+        StreamDeckType::Mini,
+    ];
+
+    /// The name of the Streamdeck type, as human readable string (english).
     pub fn name(&self) -> &'static str {
         match *self {
             StreamDeckType::Xl => "Streamdeck XL",
@@ -79,11 +87,46 @@ impl StreamDeckType {
             StreamDeckType::Mini => (80, 80),
         }
     }
+
+    /// Get the product id.
+    ///
+    /// Get the product id for this Streamdeck device (to compare with the
+    /// product_id returned by [HidApi]).
+    pub fn get_product_id(&self) -> u16 {
+        match *self {
+            StreamDeckType::Xl => 0x6c,
+            StreamDeckType::OrigV2 => 0x6d,
+            StreamDeckType::Orig => 0x60,
+            StreamDeckType::Mini => 0x63,
+        }
+    }
+
+    /// Get the vendor id.
+    ///
+    /// Get the vendor id for this Streamdeck device (to compare with the
+    /// vendor_id returned by [HidApi]).
+    pub fn get_vendor_id(&self) -> u16 {
+        // For now its always the same
+        0x0fd9
+    }
+
+    /// Get a type from vendor and product id.
+    ///
+    /// Returns the Streamdeck type from vendor and product id.
+    pub fn from_vendor_and_product_id(vendor_id: u16, product_id: u16) -> Option<StreamDeckType> {
+        for t in StreamDeckType::ALL {
+            if t.get_vendor_id() == vendor_id && t.get_product_id() == product_id {
+                return Some(t);
+            }
+        }
+        None
+    }
 }
 
 /// Tests are a little stupid in this module, because it contains
 /// mostly static data. Still, for now we have these tests.
 mod test {
+    #[allow(unused_imports)]
     use super::*;
 
     #[test]
@@ -136,5 +179,39 @@ mod test {
         assert_eq!(StreamDeckType::OrigV2.button_image_size(), (72, 72));
         assert_eq!(StreamDeckType::Orig.button_image_size(), (72, 72));
         assert_eq!(StreamDeckType::Mini.button_image_size(), (80, 80));
+    }
+
+    #[test]
+    fn test_get_type_correct() {
+        assert_eq!(
+            StreamDeckType::from_vendor_and_product_id(0x0fd9, 0x63),
+            Some(StreamDeckType::Mini)
+        );
+        assert_eq!(
+            StreamDeckType::from_vendor_and_product_id(0x0fd9, 0x60),
+            Some(StreamDeckType::Orig)
+        );
+        assert_eq!(
+            StreamDeckType::from_vendor_and_product_id(0x0fd9, 0x6d),
+            Some(StreamDeckType::OrigV2)
+        );
+        assert_eq!(
+            StreamDeckType::from_vendor_and_product_id(0x0fd9, 0x6c),
+            Some(StreamDeckType::Xl)
+        );
+    }
+
+    #[test]
+    fn test_get_type_incorrect() {
+        for t in StreamDeckType::ALL {
+            assert_eq!(
+                StreamDeckType::from_vendor_and_product_id(0xf334, t.get_product_id()),
+                None,
+            );
+            assert_eq!(
+                StreamDeckType::from_vendor_and_product_id( t.get_product_id(), 0xf334),
+                None,
+            );
+        }
     }
 }
