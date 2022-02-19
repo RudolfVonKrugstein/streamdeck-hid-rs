@@ -257,7 +257,8 @@ impl StreamDeckType {
 
 /// Tests are a little stupid in this module, because it contains
 /// mostly static data. Still, for now we have these tests.
-mod test {
+#[cfg(test)]
+mod tests {
     #[allow(unused_imports)]
     use super::*;
 

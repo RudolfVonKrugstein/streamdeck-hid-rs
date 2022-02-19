@@ -3,6 +3,7 @@ mod type_info;
 mod device;
 mod error;
 mod image;
+mod hid_api_traits;
 
 pub use type_info::*;
 pub use device::*;

@@ -1,7 +1,8 @@
 use log::debug;
 use image::RgbImage;
-use crate::StreamDeckType;
+use crate:: StreamDeckType;
 use crate::Error;
+use crate::hid_api_traits::*;
 use crate::image::image_packages;
 
 /// The state a button can be in or change to.
@@ -18,12 +19,12 @@ pub struct ButtonEvent {
     pub state: ButtonState,
 }
 
-pub struct StreamDeckDevice {
+pub struct StreamDeckDevice<API: HidApiTrait> {
     pub device_type: StreamDeckType,
-    hid_device: hidapi::HidDevice,
+    hid_device: API::HidDevice,
 }
 
-impl StreamDeckDevice {
+impl<API: HidApiTrait> StreamDeckDevice<API> {
     /// Lists all Streamdeck devices without opening them.
     ///
     /// # Arguments
@@ -52,15 +53,15 @@ impl StreamDeckDevice {
     ///     }
     /// }
     /// ```
-    pub fn list_devices(api: &hidapi::HidApi) -> Result<Vec<(StreamDeckType, hidapi::DeviceInfo)>, Error> {
-        let mut result: Vec<(StreamDeckType, hidapi::DeviceInfo)> = Vec::new();
+    pub fn list_devices(api: &API) -> Result<Vec<(StreamDeckType, API::DeviceInfo)>, Error> {
+        let mut result: Vec<(StreamDeckType, API::DeviceInfo)> = Vec::new();
 
         for device in api.device_list() {
             if let Some(device_type) = StreamDeckType::from_vendor_and_product_id(
                 device.vendor_id(),
                 device.product_id()
             ) {
-                result.push((device_type, device.clone()));
+                result.push((device_type, device));
             }
         }
         Ok(result)
@@ -99,7 +100,7 @@ impl StreamDeckDevice {
     ///     }
     /// }
     /// ```
-    pub fn open(api: &hidapi::HidApi, device_info: &hidapi::DeviceInfo) -> Result<StreamDeckDevice, Error> {
+    pub fn open(api: &API, device_info: &API::DeviceInfo) -> Result<StreamDeckDevice<API>, Error> {
         let device_type = StreamDeckType::from_vendor_and_product_id(
             device_info.vendor_id(),
             device_info.product_id(),
@@ -144,7 +145,7 @@ impl StreamDeckDevice {
     ///     // ... do something with device ...
     /// }
     /// ```
-    pub fn open_first_device(api: &hidapi::HidApi) -> Result<StreamDeckDevice, Error> {
+    pub fn open_first_device(api: &API) -> Result<StreamDeckDevice<API>, Error> {
         let mut all_devices = StreamDeckDevice::list_devices(api)?;
         if !all_devices.is_empty() {
             return StreamDeckDevice::open(api, &all_devices.remove(0).1);
@@ -297,13 +298,72 @@ impl StreamDeckDevice {
     }
 }
 
-mod test {
+#[cfg(test)]
+mod tests {
+    #[allow(unused_imports)]
+    use mockall::*;
+    #[allow(unused_imports)]
+    use mockall::predicate::*;
     #[allow(unused_imports)]
     use super::*;
 
     #[test]
-    fn test_list_devices() {
-        todo!();
+    fn test_list_devices_empty() {
+        // Setup
+        let mut api_mock = MockMockHidApi::new();
+        api_mock.expect_device_list()
+            .times(1)
+            .returning(|| Vec::new());
+
+        // Act
+        let devices = StreamDeckDevice::list_devices(&api_mock).unwrap();
+
+        // Test
+        assert_eq!(devices.len(), 0);
+    }
+
+    #[test]
+    fn test_list_devices_non_streamdeck_empty() {
+        // Setup
+        let mut api_mock = MockMockHidApi::new();
+        api_mock.expect_device_list()
+            .times(1)
+            .returning(|| {
+                let mut info_mock = MockDeviceInfoTrait::new();
+                info_mock.expect_vendor_id().returning(|| 1);
+                info_mock.expect_product_id().returning(|| 1);
+                Vec::from([info_mock])
+            });
+
+        // Act
+        let devices = StreamDeckDevice::list_devices(&api_mock).unwrap();
+
+        // Test
+        assert_eq!(devices.len(), 0);
+    }
+
+    #[test]
+    fn test_list_devices_streamdeck_device() {
+        // Setup
+        let mut api_mock = MockMockHidApi::new();
+        api_mock.expect_device_list()
+            .times(1)
+            .returning(|| {
+                let mut wrong_info_mock = MockDeviceInfoTrait::new();
+                wrong_info_mock.expect_vendor_id().returning(|| 1);
+                wrong_info_mock.expect_product_id().returning(|| 1);
+                let mut correct_info_mock = MockDeviceInfoTrait::new();
+                correct_info_mock.expect_vendor_id().returning(|| StreamDeckType::Xl.get_vendor_id());
+                correct_info_mock.expect_product_id().returning(|| StreamDeckType::Xl.get_product_id());
+                Vec::from([wrong_info_mock, correct_info_mock])
+            });
+
+        // Act
+        let devices = StreamDeckDevice::list_devices(&api_mock).unwrap();
+
+        // Test
+        assert_eq!(devices.len(), 1);
+        assert_eq!(devices[0].0, StreamDeckType::Xl);
     }
 
     #[test]

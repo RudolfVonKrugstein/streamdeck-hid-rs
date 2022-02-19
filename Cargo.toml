@@ -10,3 +10,4 @@ hidapi = "~1"
 image = "~0"
 imageproc = { git = "https://github.com/image-rs/imageproc" }
 log = "~0"
+mockall = "~0"
