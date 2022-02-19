@@ -134,7 +134,7 @@ impl StreamDeckType {
     }
 
     /// Returns the byte packet to be used to set the brightness of the device.
-    pub fn brightness_packet(&self, brightness: u8) -> Vec<u8> {
+    pub(crate) fn brightness_packet(&self, brightness: u8) -> Vec<u8> {
         match *self {
             StreamDeckType::Xl=> {
                 let mut cmd = vec![0u8; 32];
@@ -165,7 +165,7 @@ impl StreamDeckType {
     const RESET_PACKET_32: [u8;32] = [0x03, 0x02, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
 
     /// Returns the byte packet to reset the device.
-    pub fn reset_packet(&self) -> &'static [u8] {
+    pub(crate) fn reset_packet(&self) -> &'static [u8] {
         match *self {
             StreamDeckType::Xl=> &StreamDeckType::RESET_PACKET_32,
             StreamDeckType::OrigV2=> &StreamDeckType::RESET_PACKET_32,
@@ -175,14 +175,14 @@ impl StreamDeckType {
     }
 
     /// Package to reset the key stream communication.
-    pub fn reset_key_stream_packet(&self) -> Vec<u8> {
+    pub(crate) fn reset_key_stream_packet(&self) -> Vec<u8> {
         let mut r = vec![0; self.image_package_size()];
         r[0] = 2;
         r
     }
 
     /// How big is an button image package for this device?
-    pub fn image_package_size(&self) -> usize {
+    pub(crate) fn image_package_size(&self) -> usize {
         match *self {
             StreamDeckType::Xl=> 1024,
             StreamDeckType::OrigV2=> 1024,
@@ -192,7 +192,7 @@ impl StreamDeckType {
     }
 
     /// Header for image packages send to set images on buttons.
-    fn image_package_header(
+    pub(crate) fn image_package_header(
         &self, bytes_remaining: usize, btn_index: u8, page_number: u16
     ) -> Vec<u8> {
         match *self {
@@ -225,12 +225,22 @@ impl StreamDeckType {
     }
 
     /// Tansformation needed to display the image correctly
-    pub fn button_image_transformation(&self) -> ImageTransformation {
+    pub(crate) fn button_image_transformation(&self) -> ImageTransformation {
         match *self {
             StreamDeckType::Xl => ImageTransformation::Rotate180,
             StreamDeckType::OrigV2 => ImageTransformation::Rotate180,
             StreamDeckType::Orig => ImageTransformation::Rotate180,
             StreamDeckType::Mini => ImageTransformation::Rotate270,
+        }
+    }
+
+    /// Maximum payload per packet for the device
+    pub(crate) fn max_payload_size(&self) -> usize {
+        match *self {
+            StreamDeckType::Xl => self.image_package_size() - 8,
+            StreamDeckType::OrigV2 => self.image_package_size() - 8,
+            StreamDeckType::Orig => 7803,
+            StreamDeckType::Mini => 7803
         }
     }
 }
@@ -394,5 +404,13 @@ mod test {
         assert_eq!(StreamDeckType::OrigV2.button_image_transformation(), ImageTransformation::Rotate180);
         assert_eq!(StreamDeckType::Orig.button_image_transformation(), ImageTransformation::Rotate180);
         assert_eq!(StreamDeckType::Mini.button_image_transformation(), ImageTransformation::Rotate270);
+    }
+
+    #[test]
+    fn max_payload_size() {
+        assert_eq!(StreamDeckType::Xl.max_payload_size(), 1024-8);
+        assert_eq!(StreamDeckType::OrigV2.max_payload_size(), 1024-8);
+        assert_eq!(StreamDeckType::Orig.max_payload_size(), 7803);
+        assert_eq!(StreamDeckType::Mini.max_payload_size(), 7803);
     }
 }
