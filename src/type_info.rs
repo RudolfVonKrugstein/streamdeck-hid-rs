@@ -5,6 +5,8 @@
 //!
 //! The type of the streamdeck is defined in the enum [StreamDeckType]
 
+use std::cmp::min;
+
 /// Type of Streamdeck device.
 ///
 /// This enum defined the types of Streamdeck devices known to this library.
@@ -24,6 +26,15 @@ pub enum StreamDeckType {
 pub enum StreamDeckImageFormat {
     Jpeg,
     Bmp,
+}
+
+/// The transformation an image needs to make to be correctly displayed on the screen.
+///
+/// This enum contains only those transformations ever needed on streamdecks.
+#[derive(PartialEq, Debug)]
+pub enum ImageTransformation {
+    Rotate180,
+    Rotate270,
 }
 
 /// The implementation of the [StreamDeckType] provides
@@ -121,6 +132,107 @@ impl StreamDeckType {
         }
         None
     }
+
+    /// Returns the byte packet to be used to set the brightness of the device.
+    pub fn brightness_packet(&self, brightness: u8) -> Vec<u8> {
+        match *self {
+            StreamDeckType::Xl=> {
+                let mut cmd = vec![0u8; 32];
+                cmd[..3].copy_from_slice(&[0x03, 0x08, brightness]);
+                cmd
+            }
+            StreamDeckType::OrigV2=> {
+                let mut cmd = vec![0u8; 32];
+                cmd[..3].copy_from_slice(&[0x03, 0x08, brightness]);
+                cmd
+            }
+            StreamDeckType::Orig=> {
+                let mut cmd = vec![0u8; 17];
+                cmd[..6].copy_from_slice(&[0x05, 0x55, 0xaa, 0xd1, 0x01, brightness]);
+                cmd
+            }
+            StreamDeckType::Mini => {
+                let mut cmd = vec![0u8; 17];
+                cmd[..6].copy_from_slice(&[0x05, 0x55, 0xaa, 0xd1, 0x01, brightness]);
+                cmd
+            }
+        }
+    }
+
+    /// General, reused reset packet
+    const RESET_PACKET_17: [u8;17]  = [0x0b, 0x63, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+    /// General, reused reset packet
+    const RESET_PACKET_32: [u8;32] = [0x03, 0x02, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+
+    /// Returns the byte packet to reset the device.
+    pub fn reset_packet(&self) -> &'static [u8] {
+        match *self {
+            StreamDeckType::Xl=> &StreamDeckType::RESET_PACKET_32,
+            StreamDeckType::OrigV2=> &StreamDeckType::RESET_PACKET_32,
+            StreamDeckType::Orig=> &StreamDeckType::RESET_PACKET_17,
+            StreamDeckType::Mini => &StreamDeckType::RESET_PACKET_17
+        }
+    }
+
+    /// Package to reset the key stream communication.
+    pub fn reset_key_stream_packet(&self) -> Vec<u8> {
+        let mut r = vec![0; self.image_package_size()];
+        r[0] = 2;
+        r
+    }
+
+    /// How big is an button image package for this device?
+    pub fn image_package_size(&self) -> usize {
+        match *self {
+            StreamDeckType::Xl=> 1024,
+            StreamDeckType::OrigV2=> 1024,
+            StreamDeckType::Orig=> 8191,
+            StreamDeckType::Mini => 8191
+        }
+    }
+
+    /// Header for image packages send to set images on buttons.
+    fn image_package_header(
+        &self, bytes_remaining: usize, btn_index: u8, page_number: u16
+    ) -> Vec<u8> {
+        match *self {
+            StreamDeckType::Xl | StreamDeckType::OrigV2 => {
+                let length = min(self.image_package_size(), bytes_remaining);
+                vec![
+                    0x2,
+                    0x7,
+                    btn_index,
+                    if length == bytes_remaining {0x01} else {0x00},
+                    (length & 0xFF) as u8,
+                    (length >> 8) as u8,
+                    (page_number & 0xFF) as u8,
+                    (page_number >> 8) as u8,
+                ]
+            },
+            StreamDeckType::Mini | StreamDeckType::Orig => {
+                let _length = min(self.image_package_size(), bytes_remaining);
+                vec![
+                    0x02,
+                    0x01,
+                    (page_number + 1) as u8,
+                    0,
+                    if page_number == 1 {0x01} else {0x00},
+                    (btn_index + 1) as u8,
+                    0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0,
+                ]
+            }
+        }
+    }
+
+    /// Tansformation needed to display the image correctly
+    pub fn button_image_transformation(&self) -> ImageTransformation {
+        match *self {
+            StreamDeckType::Xl => ImageTransformation::Rotate180,
+            StreamDeckType::OrigV2 => ImageTransformation::Rotate180,
+            StreamDeckType::Orig => ImageTransformation::Rotate180,
+            StreamDeckType::Mini => ImageTransformation::Rotate270,
+        }
+    }
 }
 
 /// Tests are a little stupid in this module, because it contains
@@ -213,5 +325,74 @@ mod test {
                 None,
             );
         }
+    }
+
+    #[test]
+    fn test_brightness_packet() {
+        // We only test the brightness byte ... the rest is constants
+        assert_eq!(StreamDeckType::Xl.brightness_packet(22)[2], 22);
+        assert_eq!(StreamDeckType::OrigV2.brightness_packet(23)[2], 23);
+        assert_eq!(StreamDeckType::Orig.brightness_packet(34)[5], 34);
+        assert_eq!(StreamDeckType::Mini.brightness_packet(35)[5], 35);
+    }
+
+    #[test]
+    fn test_reset_packet() {
+        assert_eq!(StreamDeckType::Xl.reset_packet()[0], 0x03);
+        assert_eq!(StreamDeckType::OrigV2.reset_packet()[0], 0x03);
+        assert_eq!(StreamDeckType::Orig.reset_packet()[0], 0x0b);
+        assert_eq!(StreamDeckType::Mini.reset_packet()[0], 0x0b);
+    }
+
+    #[test]
+    fn test_reset_keystream_package() {
+        assert_eq!(StreamDeckType::Xl.reset_key_stream_packet()[0], 2);
+        assert_eq!(StreamDeckType::OrigV2.reset_key_stream_packet()[0], 2);
+        assert_eq!(StreamDeckType::Orig.reset_key_stream_packet()[0], 2);
+        assert_eq!(StreamDeckType::Mini.reset_key_stream_packet()[0], 2);
+    }
+
+    #[test]
+    fn test_image_package_size() {
+        assert_eq!(StreamDeckType::Xl.image_package_size(), 1024);
+        assert_eq!(StreamDeckType::OrigV2.image_package_size(), 1024);
+        assert_eq!(StreamDeckType::Orig.image_package_size(), 8191);
+        assert_eq!(StreamDeckType::Mini.image_package_size(), 8191);
+    }
+
+    #[test]
+    fn test_image_package_header_button_index() {
+        for btn_index in 0..6 {
+            assert_eq!(StreamDeckType::Xl.image_package_header(700, btn_index.clone(), 1)[2], btn_index.clone());
+            assert_eq!(StreamDeckType::OrigV2.image_package_header(700, btn_index.clone(), 1)[2], btn_index.clone());
+            assert_eq!(StreamDeckType::Orig.image_package_header(700, btn_index.clone(), 1)[5], (btn_index + 1) as u8);
+            assert_eq!(StreamDeckType::Mini.image_package_header(700, btn_index.clone(), 1)[5], (btn_index + 1) as u8);
+        }
+    }
+
+    #[test]
+    fn test_image_package_header_page_number() {
+        for page_number in 0..300 {
+            assert_eq!(StreamDeckType::Xl.image_package_header(700, 1, page_number.clone())[6], (page_number.clone() & 0xFF) as u8);
+            assert_eq!(StreamDeckType::Xl.image_package_header(700, 1, page_number.clone())[7], (page_number.clone() >> 8) as u8);
+
+            assert_eq!(StreamDeckType::OrigV2.image_package_header(700, 1, page_number.clone())[6], (page_number.clone() & 0xFF) as u8);
+            assert_eq!(StreamDeckType::OrigV2.image_package_header(700, 1, page_number.clone())[7], (page_number.clone() >> 8) as u8);
+
+            assert_eq!(StreamDeckType::Orig.image_package_header(700, 1, page_number.clone())[2], (page_number.clone() + 1) as u8);
+            assert_eq!(StreamDeckType::Orig.image_package_header(700, 1, page_number.clone())[4], if page_number == 1 {0x01} else {0x00});
+
+            assert_eq!(StreamDeckType::Mini.image_package_header(700, 1, page_number.clone())[2], (page_number.clone() + 1) as u8);
+            assert_eq!(StreamDeckType::Mini.image_package_header(700, 1, page_number.clone())[4], if page_number == 1 {0x01} else {0x00});
+
+        }
+    }
+
+    #[test]
+    fn test_button_image_transformation() {
+        assert_eq!(StreamDeckType::Xl.button_image_transformation(), ImageTransformation::Rotate180);
+        assert_eq!(StreamDeckType::OrigV2.button_image_transformation(), ImageTransformation::Rotate180);
+        assert_eq!(StreamDeckType::Orig.button_image_transformation(), ImageTransformation::Rotate180);
+        assert_eq!(StreamDeckType::Mini.button_image_transformation(), ImageTransformation::Rotate270);
     }
 }
