@@ -367,19 +367,4 @@ mod tests {
         assert_eq!(devices.len(), 1);
         assert_eq!(devices[0].0, StreamDeckType::Xl);
     }
-
-    #[test]
-    fn test_set_brightness() {
-        todo!();
-    }
-
-    #[test]
-    fn test_reset() {
-        todo!();
-    }
-
-    #[test]
-    fn test_set_button_image() {
-        todo!();
-    }
 }
