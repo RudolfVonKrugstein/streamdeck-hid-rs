@@ -243,6 +243,16 @@ impl StreamDeckType {
             StreamDeckType::Mini => 7803
         }
     }
+
+    /// When reading from the device, this describes at what byte the state of the buttons starts.
+    pub(crate) fn button_read_offset(&self) -> usize {
+        match *self {
+            StreamDeckType::Xl => 4,
+            StreamDeckType::OrigV2 => 4,
+            StreamDeckType::Orig => 1,
+            StreamDeckType::Mini => 1
+        }
+    }
 }
 
 /// Tests are a little stupid in this module, because it contains
@@ -407,10 +417,18 @@ mod test {
     }
 
     #[test]
-    fn max_payload_size() {
+    fn test_max_payload_size() {
         assert_eq!(StreamDeckType::Xl.max_payload_size(), 1024-8);
         assert_eq!(StreamDeckType::OrigV2.max_payload_size(), 1024-8);
         assert_eq!(StreamDeckType::Orig.max_payload_size(), 7803);
         assert_eq!(StreamDeckType::Mini.max_payload_size(), 7803);
+    }
+
+    #[test]
+    fn test_button_read_offset() {
+        assert_eq!(StreamDeckType::Xl.button_read_offset(), 4);
+        assert_eq!(StreamDeckType::OrigV2.button_read_offset(), 4);
+        assert_eq!(StreamDeckType::Orig.button_read_offset(), 1);
+        assert_eq!(StreamDeckType::Mini.button_read_offset(), 1);
     }
 }
