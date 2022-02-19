@@ -4,6 +4,10 @@ version = "0.1.0"
 edition = "2021"
 authors = ["Nathan Hüsken <nathan@wintercloud.de>"]
 description = "HID Interface for Elgato Streamdeck devices"
+license = "MIT"
+homepage = "https://github.com/RudolfVonKrugstein/streamdeck-hid-rs"
+repository = "https://github.com/RudolfVonKrugstein/streamdeck-hid-rs"
+readme = "README.md"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
