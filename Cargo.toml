@@ -9,3 +9,4 @@ edition = "2021"
 hidapi = "~1"
 image = "~0"
 imageproc = { git = "https://github.com/image-rs/imageproc" }
+log = "~0"

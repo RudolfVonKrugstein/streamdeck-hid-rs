@@ -1,7 +1,22 @@
+use log::debug;
 use image::RgbImage;
 use crate::StreamDeckType;
 use crate::Error;
 use crate::image::image_packages;
+
+/// The state a button can be in or change to.
+#[derive(Clone, PartialEq, Debug)]
+pub enum ButtonState {
+    Down,
+    Up
+}
+
+/// Event send, when a button changes its state!
+#[derive(Debug, Clone)]
+pub struct ButtonEvent {
+    pub button_id: u32,
+    pub state: ButtonState,
+}
 
 pub struct StreamDeckDevice {
     pub device_type: StreamDeckType,
@@ -223,6 +238,62 @@ impl StreamDeckDevice {
             }
         }
         Ok(())
+    }
+
+    /// Wait for button events!
+    ///
+    /// The Idea is, that this runs in its own thread waiting for events on the device
+    /// and calling the closure when an event occurs.
+    ///
+    /// # Example
+    /// ```
+    /// use streamdeck_hid_rs::StreamDeckDevice;
+    ///
+    /// fn main() {
+    ///     let hidapi = hidapi::HidApi::new().unwrap();
+    ///     let device = StreamDeckDevice::open_first_device(&hidapi).unwrap();
+    ///
+    ///     device.on_button_events(|event| {
+    ///         println!("Button {} changed to {:?}", event.button_id, event.state)
+    ///     }).unwrap();
+    /// }
+    ///
+    pub fn on_button_events<F>(&self, cb: F) -> Result<(), Error>
+        where F: Fn(ButtonEvent) -> ()
+    {
+        let length: usize = self.device_type.button_read_offset() + self.device_type.total_num_buttons() as usize;
+        let mut inbuffer = vec![0; length];
+
+        let mut button_state = vec![ButtonState::Up; self.device_type.total_num_buttons() as usize];
+
+        loop {
+            match self.hid_device.read(&mut inbuffer) {
+                Result::Ok(_) => {},
+                Result::Err(e) => {
+                    return Err(Error::HidError(e))
+                }
+            };
+            debug!("Streamdeck read: {:?}", inbuffer);
+            for button_id in 0..self.device_type.total_num_buttons() {
+                if inbuffer[button_id + self.device_type.button_read_offset()] == 0 {
+                    if button_state[button_id] == ButtonState::Down {
+                        cb(ButtonEvent {
+                            button_id: button_id as u32,
+                            state: ButtonState::Up
+                        });
+                        button_state[button_id] = ButtonState::Up;
+                    }
+                } else {
+                    if button_state[button_id] == ButtonState::Up {
+                        cb(ButtonEvent {
+                            button_id: button_id as u32,
+                            state: ButtonState::Down
+                        });
+                        button_state[button_id] = ButtonState::Down;
+                    }
+                }
+            }
+        }
     }
 }
 
