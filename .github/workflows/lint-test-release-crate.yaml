@@ -1,0 +1,135 @@
+on:
+  push:
+    tags:
+      - '^v[0-9]+\.[0-9]+\.[0-9]$'
+
+name: Release to public, after linting and testing
+
+jobs:
+  check:
+    name: Check
+    runs-on: ubuntu-latest
+    steps:
+      - run: sudo apt-get install libusb-1.0-0-dev
+      - uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+      - uses: actions-rs/cargo@v1
+        with:
+          command: check
+
+  fmt:
+    name: Rustfmt
+    runs-on: ubuntu-latest
+    steps:
+      - run: sudo apt-get install libusb-1.0-0-dev
+      - uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+      - run: rustup component add rustfmt
+      - uses: actions-rs/cargo@v1
+        with:
+          command: fmt
+          args: --all -- --check
+
+  clippy:
+    name: Clippy
+    runs-on: ubuntu-latest
+    steps:
+      - run: sudo apt-get install libusb-1.0-0-dev
+      - uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          components: clippy
+          override: true
+      - uses: actions-rs/clippy-check@v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          args: --all-features
+          name: Clippy Output
+
+  test:
+    name: Test
+    env:
+      PROJECT_NAME_UNDERSCORE: streamdeck_hid_rs
+      CARGO_INCREMENTAL: 0
+      RUSTFLAGS: -Zprofile -Ccodegen-units=1 -Copt-level=0 -Clink-dead-code -Coverflow-checks=off -Zpanic_abort_tests -Cpanic=abort
+      RUSTDOCFLAGS: -Cpanic=abort
+    runs-on: ubuntu-latest
+    steps:
+      - run: sudo apt-get install libusb-1.0-0-dev
+      - uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: nightly
+          override: true
+      - name: Cache dependencies
+        uses: actions/cache@v2
+        env:
+          cache-name: cache-dependencies
+        with:
+          path: |
+            ~/.cargo/.crates.toml
+            ~/.cargo/.crates2.json
+            ~/.cargo/bin
+            ~/.cargo/registry/index
+            ~/.cargo/registry/cache
+            target
+          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('Cargo.lock') }}
+      - name: Generate test result and coverage report
+        run: |
+          cargo install cargo2junit grcov;
+          cargo test $CARGO_OPTIONS -- -Z unstable-options --format json | cargo2junit > results.xml;
+          zip -0 ccov.zip `find . \( -name "$PROJECT_NAME_UNDERSCORE*.gc*" \) -print`;
+          grcov ccov.zip -s . -t lcov --llvm --ignore-not-existing --ignore "/*" --ignore "tests/*" -o lcov.info;
+      - name: Upload test results
+        uses: EnricoMi/publish-unit-test-result-action@v1
+        with:
+          check_name: Test Results
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          files: results.xml
+
+  check_version:
+    name: Check, that the version is correctly setup (with the git tag)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Calculate the expected version based on the tag
+        run: export EXPECTED_VERSION=${GITHUB_REF#refs/*/v}
+      - name: Find the version set in config.toml
+        run: export CRATE_VERSION=$(cat Config.toml | grep version)
+      - run: export CRATE_VERSION=${CRATE_VERSION#version*=*\"}
+      - run: export CRATE_VERSION=${CRATE_VERSION%\"}
+      - name: Output the versions
+        run: echo "Version from tag=${EXPECTED_VERSION}\nVersion in Config.toml=${CRATE_VERSION}"
+      - name: Test equality
+        run:  "[ \"$EXPECTED_VERSION\" == \"$CRATE_VERSION\" ]"
+
+  release:
+    name: Release to creates.io
+    needs: [check, fmt, clippy, test, check_version]
+    env:
+      PROJECT_NAME_UNDERSCORE: streamdeck_hid_rs
+    runs-on: ubuntu-latest
+    steps:
+      - run: sudo apt-get install libusb-1.0-0-dev
+      - uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+      - name: Login to crates.io
+        run: cargo login ${CRATES_IO_API_TOKEN}
+        env:
+          CRATES_IO_API_TOKEN: ${{ secrets.CRATES_IO_API_TOKEN }}
+      - name: 'Publish to crates.io'
+        run: cargo publish
