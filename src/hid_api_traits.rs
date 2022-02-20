@@ -1,6 +1,7 @@
 //! Traits for mocking the hid api. Used for tests.
 use mockall::predicate::*;
 use mockall::*;
+use crate::StreamDeckType;
 
 /// Trait to make HidApi testable for us!
 #[automock]
@@ -73,4 +74,26 @@ mock! {
         fn device_list(&self) -> Vec<MockDeviceInfoTrait>;
         fn open(&self, vid: u16, pid: u16) -> hidapi::HidResult<MockHidDeviceTrait>;
     }
+}
+
+/// Create a mocked hid api to use in examples!
+pub fn create_api_mock_for_examples() -> MockMockHidApi {
+    let mut result = MockMockHidApi::new();
+    result.expect_device_list().returning(|| {
+        let mut di =  MockDeviceInfoTrait::new();
+        di.expect_vendor_id().returning(|| StreamDeckType::Xl.get_vendor_id());
+        di.expect_product_id().returning(|| StreamDeckType::Xl.get_product_id());
+        Vec::from([di])
+        }
+    );
+    result.expect_open().returning(
+        |_vid: u16, _pid: u16| {
+            let mut hd = MockHidDeviceTrait::new();
+            hd.expect_send_feature_report().returning(|_data: &[u8]| Ok(()));
+            hd.expect_write().returning(|data: &[u8]| Ok(data.len()));
+            hd.expect_read().returning(|data: &mut [u8]| Ok(data.len()));
+            Ok(hd)
+        }
+    );
+    result
 }

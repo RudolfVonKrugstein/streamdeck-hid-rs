@@ -42,6 +42,7 @@ impl<API: HidApiTrait> StreamDeckDevice<API> {
     ///     // that it uses this object and we could use the same instance
     ///     // for other hid related stuff.
     ///     let hidapi = hidapi::HidApi::new().unwrap();
+    ///     # let hidapi = streamdeck_hid_rs::hid_api_traits::create_api_mock_for_examples();
     ///
     ///     // List devices lists the available devices without opening them.
     ///     // It just lists the device types and the corresponding device id.
@@ -87,6 +88,7 @@ impl<API: HidApiTrait> StreamDeckDevice<API> {
     ///     // that it uses this object and we could use the same instance
     ///     // for other hid related stuff.
     ///     let hidapi = hidapi::HidApi::new().unwrap();
+    ///     # let hidapi = streamdeck_hid_rs::hid_api_traits::create_api_mock_for_examples();
     ///
     ///     // List devices lists the available devices without opening them.
     ///     // It just lists the device types and the corresponding device id.
@@ -136,6 +138,7 @@ impl<API: HidApiTrait> StreamDeckDevice<API> {
     ///     // that it uses this object and we could use the same instance
     ///     // for other hid related stuff.
     ///     let hidapi = hidapi::HidApi::new().unwrap();
+    ///     # let hidapi = streamdeck_hid_rs::hid_api_traits::create_api_mock_for_examples();
     ///
     ///     // List devices lists the available devices without opening them.
     ///     // It just lists the device types and the corresponding device id.
@@ -163,6 +166,7 @@ impl<API: HidApiTrait> StreamDeckDevice<API> {
     ///
     /// fn main() {
     ///     let hidapi = hidapi::HidApi::new().unwrap();
+    ///     # let hidapi = streamdeck_hid_rs::hid_api_traits::create_api_mock_for_examples();
     ///     let device = StreamDeckDevice::open_first_device(&hidapi).unwrap();
     ///     // make it completely dark!
     ///     device.set_brightness(0);
@@ -186,6 +190,7 @@ impl<API: HidApiTrait> StreamDeckDevice<API> {
     ///
     /// fn main() {
     ///     let hidapi = hidapi::HidApi::new().unwrap();
+    ///     # let hidapi = streamdeck_hid_rs::hid_api_traits::create_api_mock_for_examples();
     ///     let device = StreamDeckDevice::open_first_device(&hidapi).unwrap();
     ///     // Ensure communication is reseted
     ///     device.reset();
@@ -211,8 +216,9 @@ impl<API: HidApiTrait> StreamDeckDevice<API> {
     /// use streamdeck_hid_rs::StreamDeckDevice;
     ///
     /// fn main() {
-    ///     let mut hidapi = hidapi::HidApi::new().unwrap();
-    ///     let device = StreamDeckDevice::open_first_device(&mut hidapi).unwrap();
+    ///     let hidapi = hidapi::HidApi::new().unwrap();
+    ///     # let hidapi = streamdeck_hid_rs::hid_api_traits::create_api_mock_for_examples();
+    ///     let device = StreamDeckDevice::open_first_device(&hidapi).unwrap();
     ///     let mut image = image::RgbImage::new(
     ///                   device.device_type.button_image_size().0,
     ///                   device.device_type.button_image_size().1
@@ -248,8 +254,9 @@ impl<API: HidApiTrait> StreamDeckDevice<API> {
     /// use streamdeck_hid_rs::StreamDeckDevice;
     ///
     /// fn main() {
-    ///     let mut hidapi = hidapi::HidApi::new().unwrap();
-    ///     let device = StreamDeckDevice::open_first_device(&mut hidapi).unwrap();
+    ///     let hidapi = hidapi::HidApi::new().unwrap();
+    ///     # let hidapi = streamdeck_hid_rs::hid_api_traits::create_api_mock_for_examples();
+    ///     let device = StreamDeckDevice::open_first_device(&hidapi).unwrap();
     ///
     ///     // device.on_button_events(|event| {
     ///     //    println!("Button {} changed to {:?}", event.button_id, event.state)

@@ -1,7 +1,7 @@
 // Publicly expose the modules
 mod device;
 mod error;
-mod hid_api_traits;
+pub mod hid_api_traits;
 mod image;
 mod type_info;
 
