@@ -102,16 +102,19 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - name: Calculate the expected version based on the tag
-        run: export EXPECTED_VERSION=${GITHUB_REF#refs/*/v}
-      - name: Find the version set in config.toml
-        run: export CRATE_VERSION=$(cat Config.toml | grep version)
-      - run: export CRATE_VERSION=${CRATE_VERSION#version*=*\"}
-      - run: export CRATE_VERSION=${CRATE_VERSION%\"}
-      - name: Output the versions
-        run: echo "Version from tag=${EXPECTED_VERSION}\nVersion in Config.toml=${CRATE_VERSION}"
-      - name: Test equality
-        run:  "[ \"$EXPECTED_VERSION\" == \"$CRATE_VERSION\" ]"
+      - name: Display the ref
+        run: echo $GITHUB_REF
+      - name: Calculate and compare tag with version
+        run: |
+          export EXPECTED_VERSION=${GITHUB_REF#refs/*/v}
+          export CRATE_VERSION=$(cat Cargo.toml | grep version)
+          export CRATE_VERSION=${CRATE_VERSION#version*=*\"}
+          export CRATE_VERSION=${CRATE_VERSION%\"}
+          echo "Version from tag=${EXPECTED_VERSION}\nVersion in Config.toml=${CRATE_VERSION}"
+          if [ "$EXPECTED_VERSION" != "$CRATE_VERSION" ]; then
+              echo "Version are not equal"
+              exit 1
+          fi
 
   release:
     name: Release to creates.io
