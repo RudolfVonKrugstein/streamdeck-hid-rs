@@ -5,7 +5,7 @@ fn main() {
     let device = StreamDeckDevice::open_first_device(&mut hidapi).unwrap();
     let image = image::RgbImage::new(
         device.device_type.button_image_size().0,
-        device.device_type.button_image_size().1
+        device.device_type.button_image_size().1,
     );
     // let red: image::Rgb<u8> = image::Rgb::from([255, 0, 0]);
     // let image = imageproc::drawing::draw_filled_circle(
@@ -18,7 +18,7 @@ fn main() {
 
     device.set_brightness(100).unwrap();
 
-    for button_idx in 0 .. device.device_type.total_num_buttons() {
+    for button_idx in 0..device.device_type.total_num_buttons() {
         device.set_button_image(button_idx as u8, &image).unwrap();
     }
 }

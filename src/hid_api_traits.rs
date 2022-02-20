@@ -1,6 +1,6 @@
 //! Traits for mocking the hid api. Used for tests.
-use mockall::*;
 use mockall::predicate::*;
+use mockall::*;
 
 /// Trait to make HidApi testable for us!
 #[automock]
@@ -23,7 +23,7 @@ impl DeviceInfoTrait for hidapi::DeviceInfo {
 pub trait HidDeviceTrait {
     fn send_feature_report(&self, data: &[u8]) -> hidapi::HidResult<()>;
     fn write(&self, data: &[u8]) -> hidapi::HidResult<usize>;
-    fn read(&self, buf: &mut [u8]) ->  hidapi::HidResult<usize>;
+    fn read(&self, buf: &mut [u8]) -> hidapi::HidResult<usize>;
 }
 
 impl HidDeviceTrait for hidapi::HidDevice {
@@ -63,14 +63,14 @@ impl HidApiTrait for hidapi::HidApi {
     }
 }
 
-mock!{
-        pub MockHidApi {
-        }
-
-        impl HidApiTrait for MockHidApi {
-            type DeviceInfo = MockDeviceInfoTrait;
-            type HidDevice = MockHidDeviceTrait;
-            fn device_list(&self) -> Vec<MockDeviceInfoTrait>;
-            fn open(&self, vid: u16, pid: u16) -> hidapi::HidResult<MockHidDeviceTrait>;
-        }
+mock! {
+    pub MockHidApi {
     }
+
+    impl HidApiTrait for MockHidApi {
+        type DeviceInfo = MockDeviceInfoTrait;
+        type HidDevice = MockHidDeviceTrait;
+        fn device_list(&self) -> Vec<MockDeviceInfoTrait>;
+        fn open(&self, vid: u16, pid: u16) -> hidapi::HidResult<MockHidDeviceTrait>;
+    }
+}

@@ -1,15 +1,15 @@
-use log::debug;
-use image::RgbImage;
-use crate:: StreamDeckType;
-use crate::Error;
 use crate::hid_api_traits::*;
 use crate::image::image_packages;
+use crate::Error;
+use crate::StreamDeckType;
+use image::RgbImage;
+use log::debug;
 
 /// The state a button can be in or change to.
 #[derive(Clone, PartialEq, Debug)]
 pub enum ButtonState {
     Down,
-    Up
+    Up,
 }
 
 /// Event send, when a button changes its state!
@@ -57,10 +57,9 @@ impl<API: HidApiTrait> StreamDeckDevice<API> {
         let mut result: Vec<(StreamDeckType, API::DeviceInfo)> = Vec::new();
 
         for device in api.device_list() {
-            if let Some(device_type) = StreamDeckType::from_vendor_and_product_id(
-                device.vendor_id(),
-                device.product_id()
-            ) {
+            if let Some(device_type) =
+                StreamDeckType::from_vendor_and_product_id(device.vendor_id(), device.product_id())
+            {
                 result.push((device_type, device));
             }
         }
@@ -106,11 +105,10 @@ impl<API: HidApiTrait> StreamDeckDevice<API> {
             device_info.product_id(),
         );
         if let Some(device_type) = device_type {
-            let hid_device = api.open(
-                device_type.get_vendor_id(),
-                device_type.get_product_id()
-            ).map_err(|e| Error::HidError(e))?;
-            Ok(StreamDeckDevice{
+            let hid_device = api
+                .open(device_type.get_vendor_id(), device_type.get_product_id())
+                .map_err(|e| Error::HidError(e))?;
+            Ok(StreamDeckDevice {
                 hid_device,
                 device_type,
             })
@@ -171,9 +169,9 @@ impl<API: HidApiTrait> StreamDeckDevice<API> {
     /// }
     /// ```
     pub fn set_brightness(&self, brightness: u8) -> Result<(), Error> {
-        self.hid_device.send_feature_report(
-            &self.device_type.brightness_packet(brightness)
-        ).map_err(|e| Error::HidError(e))?;
+        self.hid_device
+            .send_feature_report(&self.device_type.brightness_packet(brightness))
+            .map_err(|e| Error::HidError(e))?;
         Ok(())
     }
 
@@ -195,12 +193,12 @@ impl<API: HidApiTrait> StreamDeckDevice<API> {
     /// }
     /// ```
     pub fn reset(&self) -> Result<(), Error> {
-        self.hid_device.write(
-            &self.device_type.reset_key_stream_packet())
+        self.hid_device
+            .write(&self.device_type.reset_key_stream_packet())
             .map_err(|e| Error::HidError(e))?;
-        self.hid_device.send_feature_report(
-            self.device_type.reset_packet()
-        ).map_err(|e| Error::HidError(e))?;
+        self.hid_device
+            .send_feature_report(self.device_type.reset_packet())
+            .map_err(|e| Error::HidError(e))?;
         Ok(())
     }
 
@@ -226,16 +224,15 @@ impl<API: HidApiTrait> StreamDeckDevice<API> {
     /// }
     /// ```
     pub fn set_button_image(&self, button_id: u8, image: &RgbImage) -> Result<(), Error> {
-        let image_packages = image_packages(
-            self.device_type.clone(),
-            image,
-            button_id)?;
+        let image_packages = image_packages(self.device_type.clone(), image, button_id)?;
         for image_package in image_packages {
             let image_package_len = image_package.len();
-            let result = self.hid_device.write(&image_package)
+            let result = self
+                .hid_device
+                .write(&image_package)
                 .map_err(|e| Error::HidError(e))?;
             if result != image_package_len {
-                return Err(Error::IncorrectWriteLengthError)
+                return Err(Error::IncorrectWriteLengthError);
             }
         }
         Ok(())
@@ -260,19 +257,19 @@ impl<API: HidApiTrait> StreamDeckDevice<API> {
     /// }
     ///
     pub fn on_button_events<F>(&self, cb: F) -> Result<(), Error>
-        where F: Fn(ButtonEvent) -> ()
+    where
+        F: Fn(ButtonEvent) -> (),
     {
-        let length: usize = self.device_type.button_read_offset() + self.device_type.total_num_buttons() as usize;
+        let length: usize =
+            self.device_type.button_read_offset() + self.device_type.total_num_buttons() as usize;
         let mut inbuffer = vec![0; length];
 
         let mut button_state = vec![ButtonState::Up; self.device_type.total_num_buttons() as usize];
 
         loop {
             match self.hid_device.read(&mut inbuffer) {
-                Result::Ok(_) => {},
-                Result::Err(e) => {
-                    return Err(Error::HidError(e))
-                }
+                Result::Ok(_) => {}
+                Result::Err(e) => return Err(Error::HidError(e)),
             };
             debug!("Streamdeck read: {:?}", inbuffer);
             for button_id in 0..self.device_type.total_num_buttons() {
@@ -280,7 +277,7 @@ impl<API: HidApiTrait> StreamDeckDevice<API> {
                     if button_state[button_id] == ButtonState::Down {
                         cb(ButtonEvent {
                             button_id: button_id as u32,
-                            state: ButtonState::Up
+                            state: ButtonState::Up,
                         });
                         button_state[button_id] = ButtonState::Up;
                     }
@@ -288,7 +285,7 @@ impl<API: HidApiTrait> StreamDeckDevice<API> {
                     if button_state[button_id] == ButtonState::Up {
                         cb(ButtonEvent {
                             button_id: button_id as u32,
-                            state: ButtonState::Down
+                            state: ButtonState::Down,
                         });
                         button_state[button_id] = ButtonState::Down;
                     }
@@ -301,19 +298,20 @@ impl<API: HidApiTrait> StreamDeckDevice<API> {
 #[cfg(test)]
 mod tests {
     #[allow(unused_imports)]
-    use mockall::*;
-    #[allow(unused_imports)]
-    use mockall::predicate::*;
+    use super::*;
     #[allow(unused_imports)]
     use crate::Error::HidError;
     #[allow(unused_imports)]
-    use super::*;
+    use mockall::predicate::*;
+    #[allow(unused_imports)]
+    use mockall::*;
 
     #[test]
     fn test_list_devices_empty() {
         // Setup
         let mut api_mock = MockMockHidApi::new();
-        api_mock.expect_device_list()
+        api_mock
+            .expect_device_list()
             .times(1)
             .returning(|| Vec::new());
 
@@ -328,14 +326,12 @@ mod tests {
     fn test_list_devices_non_streamdeck_empty() {
         // Setup
         let mut api_mock = MockMockHidApi::new();
-        api_mock.expect_device_list()
-            .times(1)
-            .returning(|| {
-                let mut info_mock = MockDeviceInfoTrait::new();
-                info_mock.expect_vendor_id().returning(|| 1);
-                info_mock.expect_product_id().returning(|| 1);
-                Vec::from([info_mock])
-            });
+        api_mock.expect_device_list().times(1).returning(|| {
+            let mut info_mock = MockDeviceInfoTrait::new();
+            info_mock.expect_vendor_id().returning(|| 1);
+            info_mock.expect_product_id().returning(|| 1);
+            Vec::from([info_mock])
+        });
 
         // Act
         let devices = StreamDeckDevice::list_devices(&mut api_mock);
@@ -348,17 +344,19 @@ mod tests {
     fn test_list_devices_streamdeck_device() {
         // Setup
         let mut api_mock = MockMockHidApi::new();
-        api_mock.expect_device_list()
-            .times(1)
-            .returning(|| {
-                let mut wrong_info_mock = MockDeviceInfoTrait::new();
-                wrong_info_mock.expect_vendor_id().returning(|| 1);
-                wrong_info_mock.expect_product_id().returning(|| 1);
-                let mut correct_info_mock = MockDeviceInfoTrait::new();
-                correct_info_mock.expect_vendor_id().returning(|| StreamDeckType::Xl.get_vendor_id());
-                correct_info_mock.expect_product_id().returning(|| StreamDeckType::Xl.get_product_id());
-                Vec::from([wrong_info_mock, correct_info_mock])
-            });
+        api_mock.expect_device_list().times(1).returning(|| {
+            let mut wrong_info_mock = MockDeviceInfoTrait::new();
+            wrong_info_mock.expect_vendor_id().returning(|| 1);
+            wrong_info_mock.expect_product_id().returning(|| 1);
+            let mut correct_info_mock = MockDeviceInfoTrait::new();
+            correct_info_mock
+                .expect_vendor_id()
+                .returning(|| StreamDeckType::Xl.get_vendor_id());
+            correct_info_mock
+                .expect_product_id()
+                .returning(|| StreamDeckType::Xl.get_product_id());
+            Vec::from([wrong_info_mock, correct_info_mock])
+        });
 
         // Act
         let devices = StreamDeckDevice::list_devices(&mut api_mock);
