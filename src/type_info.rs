@@ -41,7 +41,7 @@ pub enum ImageTransformation {
 /// functions to get information specific to the StreamDeck type.
 impl StreamDeckType {
     /// List of ALL possible types
-    pub(crate) const ALL: [StreamDeckType; 4] = [
+    pub const ALL: [StreamDeckType; 4] = [
         StreamDeckType::Xl,
         StreamDeckType::OrigV2,
         StreamDeckType::Orig,
