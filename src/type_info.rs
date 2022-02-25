@@ -404,19 +404,19 @@ mod tests {
     fn test_image_package_header_button_index() {
         for btn_index in 0..6 {
             assert_eq!(
-                StreamDeckType::Xl.image_package_header(700, btn_index.clone(), 1)[2],
+                StreamDeckType::Xl.image_package_header(700, btn_index, 1)[2],
                 btn_index.clone()
             );
             assert_eq!(
-                StreamDeckType::OrigV2.image_package_header(700, btn_index.clone(), 1)[2],
+                StreamDeckType::OrigV2.image_package_header(700, btn_index, 1)[2],
                 btn_index.clone()
             );
             assert_eq!(
-                StreamDeckType::Orig.image_package_header(700, btn_index.clone(), 1)[5],
+                StreamDeckType::Orig.image_package_header(700, btn_index, 1)[5],
                 (btn_index + 1) as u8
             );
             assert_eq!(
-                StreamDeckType::Mini.image_package_header(700, btn_index.clone(), 1)[5],
+                StreamDeckType::Mini.image_package_header(700, btn_index, 1)[5],
                 (btn_index + 1) as u8
             );
         }
@@ -426,38 +426,38 @@ mod tests {
     fn test_image_package_header_page_number() {
         for page_number in 0..300 {
             assert_eq!(
-                StreamDeckType::Xl.image_package_header(700, 1, page_number.clone())[6],
-                (page_number.clone() & 0xFF) as u8
+                StreamDeckType::Xl.image_package_header(700, 1, page_number)[6],
+                (page_number & 0xFF) as u8
             );
             assert_eq!(
-                StreamDeckType::Xl.image_package_header(700, 1, page_number.clone())[7],
-                (page_number.clone() >> 8) as u8
-            );
-
-            assert_eq!(
-                StreamDeckType::OrigV2.image_package_header(700, 1, page_number.clone())[6],
-                (page_number.clone() & 0xFF) as u8
-            );
-            assert_eq!(
-                StreamDeckType::OrigV2.image_package_header(700, 1, page_number.clone())[7],
-                (page_number.clone() >> 8) as u8
+                StreamDeckType::Xl.image_package_header(700, 1, page_number)[7],
+                (page_number >> 8) as u8
             );
 
             assert_eq!(
-                StreamDeckType::Orig.image_package_header(700, 1, page_number.clone())[2],
-                (page_number.clone() + 1) as u8
+                StreamDeckType::OrigV2.image_package_header(700, 1, page_number)[6],
+                (page_number & 0xFF) as u8
             );
             assert_eq!(
-                StreamDeckType::Orig.image_package_header(700, 1, page_number.clone())[4],
+                StreamDeckType::OrigV2.image_package_header(700, 1, page_number)[7],
+                (page_number >> 8) as u8
+            );
+
+            assert_eq!(
+                StreamDeckType::Orig.image_package_header(700, 1, page_number)[2],
+                (page_number + 1) as u8
+            );
+            assert_eq!(
+                StreamDeckType::Orig.image_package_header(700, 1, page_number)[4],
                 if page_number == 1 { 0x01 } else { 0x00 }
             );
 
             assert_eq!(
-                StreamDeckType::Mini.image_package_header(700, 1, page_number.clone())[2],
-                (page_number.clone() + 1) as u8
+                StreamDeckType::Mini.image_package_header(700, 1, page_number)[2],
+                (page_number + 1) as u8
             );
             assert_eq!(
-                StreamDeckType::Mini.image_package_header(700, 1, page_number.clone())[4],
+                StreamDeckType::Mini.image_package_header(700, 1, page_number)[4],
                 if page_number == 1 { 0x01 } else { 0x00 }
             );
         }

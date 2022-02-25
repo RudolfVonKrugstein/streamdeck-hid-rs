@@ -144,11 +144,11 @@ mod tests {
             // We just test if the first bytes are correctly set
             match &device_type.button_image_format() {
                 StreamDeckImageFormat::Bmp => {
-                    assert_eq!(packages[0][correct_header.len() + 0], 66);
+                    assert_eq!(packages[0][correct_header.len()], 66);
                     assert_eq!(packages[0][correct_header.len() + 1], 77);
                 }
                 StreamDeckImageFormat::Jpeg => {
-                    assert_eq!(packages[0][correct_header.len() + 0], 255);
+                    assert_eq!(packages[0][correct_header.len()], 255);
                     assert_eq!(packages[0][correct_header.len() + 1], 216);
                 }
             }
