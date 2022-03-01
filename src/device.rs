@@ -24,6 +24,8 @@ pub struct StreamDeckDevice<API: HidApiTrait> {
     hid_device: API::HidDevice,
 }
 
+unsafe impl Sync for StreamDeckDevice<hidapi::HidApi> {}
+
 impl<API: HidApiTrait> StreamDeckDevice<API> {
     /// Lists all Streamdeck devices without opening them.
     ///
