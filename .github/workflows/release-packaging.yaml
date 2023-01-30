@@ -12,7 +12,7 @@ jobs:
       PROJECT_NAME_UNDERSCORE: streamdeck_hid_rs
     runs-on: ubuntu-latest
     steps:
-      - run: sudo apt-get install libusb-1.0-0-dev
+      - run: sudo apt-get install libusb-1.0-0-dev libudev-dev
       - uses: actions/checkout@v2
       - uses: actions-rs/toolchain@v1
         with:
