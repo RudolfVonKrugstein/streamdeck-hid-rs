@@ -19,9 +19,11 @@ fn main() {
     // );
     let send_device = device.clone();
     let t = thread::spawn(move || {
-        send_device.on_button_events(|event| {
-           println!("Button {} changed to {:?}", event.button_id, event.state);
-       }).unwrap();
+        send_device
+            .on_button_events(|event| {
+                println!("Button {} changed to {:?}", event.button_id, event.state);
+            })
+            .unwrap();
     });
 
     device.set_brightness(100).unwrap();
