@@ -13,6 +13,7 @@ use std::cmp::min;
 #[derive(PartialEq, Debug, Clone)]
 pub enum StreamDeckType {
     Xl,
+    MK2,
     OrigV2,
     Orig,
     Mini,
@@ -41,8 +42,9 @@ pub enum ImageTransformation {
 /// functions to get information specific to the StreamDeck type.
 impl StreamDeckType {
     /// List of ALL possible types
-    pub const ALL: [StreamDeckType; 4] = [
+    pub const ALL: [StreamDeckType; 5] = [
         StreamDeckType::Xl,
+        StreamDeckType::MK2,
         StreamDeckType::OrigV2,
         StreamDeckType::Orig,
         StreamDeckType::Mini,
@@ -52,6 +54,7 @@ impl StreamDeckType {
     pub fn name(&self) -> &'static str {
         match *self {
             StreamDeckType::Xl => "Streamdeck XL",
+            StreamDeckType::MK2 => "Streamdeck (MK2)",
             StreamDeckType::OrigV2 => "Streamdeck (original v2)",
             StreamDeckType::Orig => "Streamdeck original",
             StreamDeckType::Mini => "Streamdeck Mini",
@@ -65,6 +68,7 @@ impl StreamDeckType {
     pub fn num_buttons(&self) -> (u32, u32) {
         match *self {
             StreamDeckType::Xl => (4, 8),
+            StreamDeckType::MK2 => (3, 5),
             StreamDeckType::OrigV2 => (3, 5),
             StreamDeckType::Orig => (3, 5),
             StreamDeckType::Mini => (2, 3),
@@ -81,6 +85,7 @@ impl StreamDeckType {
     pub fn button_image_format(&self) -> StreamDeckImageFormat {
         match *self {
             StreamDeckType::Xl => StreamDeckImageFormat::Jpeg,
+            StreamDeckType::MK2 => StreamDeckImageFormat::Jpeg,
             StreamDeckType::OrigV2 => StreamDeckImageFormat::Jpeg,
             StreamDeckType::Orig => StreamDeckImageFormat::Bmp,
             StreamDeckType::Mini => StreamDeckImageFormat::Bmp,
@@ -93,6 +98,7 @@ impl StreamDeckType {
     pub fn button_image_size(&self) -> (u32, u32) {
         match *self {
             StreamDeckType::Xl => (96, 96),
+            StreamDeckType::MK2 => (72, 72),
             StreamDeckType::OrigV2 => (72, 72),
             StreamDeckType::Orig => (72, 72),
             StreamDeckType::Mini => (80, 80),
@@ -106,6 +112,7 @@ impl StreamDeckType {
     pub fn get_product_id(&self) -> u16 {
         match *self {
             StreamDeckType::Xl => 0x6c,
+            StreamDeckType::MK2 => 0x80,
             StreamDeckType::OrigV2 => 0x6d,
             StreamDeckType::Orig => 0x60,
             StreamDeckType::Mini => 0x63,
@@ -141,6 +148,11 @@ impl StreamDeckType {
                 cmd[..3].copy_from_slice(&[0x03, 0x08, brightness]);
                 cmd
             }
+            StreamDeckType::MK2 => {
+                let mut cmd = vec![0u8; 32];
+                cmd[..3].copy_from_slice(&[0x03, 0x08, brightness]);
+                cmd
+            }
             StreamDeckType::OrigV2 => {
                 let mut cmd = vec![0u8; 32];
                 cmd[..3].copy_from_slice(&[0x03, 0x08, brightness]);
@@ -171,6 +183,7 @@ impl StreamDeckType {
     pub(crate) fn reset_packet(&self) -> &'static [u8] {
         match *self {
             StreamDeckType::Xl => &StreamDeckType::RESET_PACKET_32,
+            StreamDeckType::MK2 => &StreamDeckType::RESET_PACKET_32,
             StreamDeckType::OrigV2 => &StreamDeckType::RESET_PACKET_32,
             StreamDeckType::Orig => &StreamDeckType::RESET_PACKET_17,
             StreamDeckType::Mini => &StreamDeckType::RESET_PACKET_17,
@@ -188,6 +201,7 @@ impl StreamDeckType {
     pub(crate) fn image_package_size(&self) -> usize {
         match *self {
             StreamDeckType::Xl => 1024,
+            StreamDeckType::MK2 => 1024,
             StreamDeckType::OrigV2 => 1024,
             StreamDeckType::Orig => 8191,
             StreamDeckType::Mini => 8191,
@@ -202,7 +216,7 @@ impl StreamDeckType {
         page_number: u16,
     ) -> Vec<u8> {
         match *self {
-            StreamDeckType::Xl | StreamDeckType::OrigV2 => {
+            StreamDeckType::Xl | StreamDeckType::OrigV2 | StreamDeckType::MK2 => {
                 let length = min(self.image_package_size(), bytes_remaining);
                 vec![
                     0x2,
@@ -247,6 +261,7 @@ impl StreamDeckType {
     pub(crate) fn button_image_transformation(&self) -> ImageTransformation {
         match *self {
             StreamDeckType::Xl => ImageTransformation::Rotate180,
+            StreamDeckType::MK2 => ImageTransformation::Rotate180,
             StreamDeckType::OrigV2 => ImageTransformation::Rotate180,
             StreamDeckType::Orig => ImageTransformation::Rotate180,
             StreamDeckType::Mini => ImageTransformation::Rotate270,
@@ -257,6 +272,7 @@ impl StreamDeckType {
     pub(crate) fn max_payload_size(&self) -> usize {
         match *self {
             StreamDeckType::Xl => self.image_package_size() - 8,
+            StreamDeckType::MK2 => self.image_package_size() - 8,
             StreamDeckType::OrigV2 => self.image_package_size() - 8,
             StreamDeckType::Orig => 7803,
             StreamDeckType::Mini => 7803,
@@ -267,6 +283,7 @@ impl StreamDeckType {
     pub(crate) fn button_read_offset(&self) -> usize {
         match *self {
             StreamDeckType::Xl => 4,
+            StreamDeckType::MK2 => 4,
             StreamDeckType::OrigV2 => 4,
             StreamDeckType::Orig => 1,
             StreamDeckType::Mini => 1,
@@ -284,6 +301,7 @@ mod tests {
     #[test]
     fn test_name() {
         assert!(StreamDeckType::Xl.name().contains("XL"));
+        assert!(StreamDeckType::MK2.name().contains("(MK2)"));
         assert!(StreamDeckType::OrigV2.name().contains("(original v2)"));
         assert!(StreamDeckType::Orig.name().contains("original"));
         assert!(StreamDeckType::Mini.name().contains("Mini"));
@@ -292,6 +310,7 @@ mod tests {
     #[test]
     fn test_num_buttons() {
         assert_eq!(StreamDeckType::Xl.num_buttons(), (4, 8));
+        assert_eq!(StreamDeckType::MK2.num_buttons(), (3, 5));
         assert_eq!(StreamDeckType::OrigV2.num_buttons(), (3, 5));
         assert_eq!(StreamDeckType::Orig.num_buttons(), (3, 5));
         assert_eq!(StreamDeckType::Mini.num_buttons(), (2, 3));
@@ -300,6 +319,7 @@ mod tests {
     #[test]
     fn test_total_buttons() {
         assert_eq!(StreamDeckType::Xl.total_num_buttons(), 32);
+        assert_eq!(StreamDeckType::MK2.total_num_buttons(), 15);
         assert_eq!(StreamDeckType::OrigV2.total_num_buttons(), 15);
         assert_eq!(StreamDeckType::Orig.total_num_buttons(), 15);
         assert_eq!(StreamDeckType::Mini.total_num_buttons(), 6);
@@ -309,6 +329,10 @@ mod tests {
     fn test_button_image_format() {
         assert_eq!(
             StreamDeckType::Xl.button_image_format(),
+            StreamDeckImageFormat::Jpeg
+        );
+        assert_eq!(
+            StreamDeckType::MK2.button_image_format(),
             StreamDeckImageFormat::Jpeg
         );
         assert_eq!(
@@ -328,6 +352,7 @@ mod tests {
     #[test]
     fn test_button_image_size() {
         assert_eq!(StreamDeckType::Xl.button_image_size(), (96, 96));
+        assert_eq!(StreamDeckType::MK2.button_image_size(), (72, 72));
         assert_eq!(StreamDeckType::OrigV2.button_image_size(), (72, 72));
         assert_eq!(StreamDeckType::Orig.button_image_size(), (72, 72));
         assert_eq!(StreamDeckType::Mini.button_image_size(), (80, 80));
@@ -342,6 +367,10 @@ mod tests {
         assert_eq!(
             StreamDeckType::from_vendor_and_product_id(0x0fd9, 0x60),
             Some(StreamDeckType::Orig)
+        );
+        assert_eq!(
+            StreamDeckType::from_vendor_and_product_id(0x0fd9, 0x80),
+            Some(StreamDeckType::MK2)
         );
         assert_eq!(
             StreamDeckType::from_vendor_and_product_id(0x0fd9, 0x6d),
@@ -371,6 +400,7 @@ mod tests {
     fn test_brightness_packet() {
         // We only test the brightness byte ... the rest is constants
         assert_eq!(StreamDeckType::Xl.brightness_packet(22)[2], 22);
+        assert_eq!(StreamDeckType::MK2.brightness_packet(23)[2], 23);
         assert_eq!(StreamDeckType::OrigV2.brightness_packet(23)[2], 23);
         assert_eq!(StreamDeckType::Orig.brightness_packet(34)[5], 34);
         assert_eq!(StreamDeckType::Mini.brightness_packet(35)[5], 35);
@@ -379,6 +409,7 @@ mod tests {
     #[test]
     fn test_reset_packet() {
         assert_eq!(StreamDeckType::Xl.reset_packet()[0], 0x03);
+        assert_eq!(StreamDeckType::MK2.reset_packet()[0], 0x03);
         assert_eq!(StreamDeckType::OrigV2.reset_packet()[0], 0x03);
         assert_eq!(StreamDeckType::Orig.reset_packet()[0], 0x0b);
         assert_eq!(StreamDeckType::Mini.reset_packet()[0], 0x0b);
@@ -387,6 +418,7 @@ mod tests {
     #[test]
     fn test_reset_keystream_package() {
         assert_eq!(StreamDeckType::Xl.reset_key_stream_packet()[0], 2);
+        assert_eq!(StreamDeckType::MK2.reset_key_stream_packet()[0], 2);
         assert_eq!(StreamDeckType::OrigV2.reset_key_stream_packet()[0], 2);
         assert_eq!(StreamDeckType::Orig.reset_key_stream_packet()[0], 2);
         assert_eq!(StreamDeckType::Mini.reset_key_stream_packet()[0], 2);
@@ -395,6 +427,7 @@ mod tests {
     #[test]
     fn test_image_package_size() {
         assert_eq!(StreamDeckType::Xl.image_package_size(), 1024);
+        assert_eq!(StreamDeckType::MK2.image_package_size(), 1024);
         assert_eq!(StreamDeckType::OrigV2.image_package_size(), 1024);
         assert_eq!(StreamDeckType::Orig.image_package_size(), 8191);
         assert_eq!(StreamDeckType::Mini.image_package_size(), 8191);
@@ -405,6 +438,10 @@ mod tests {
         for btn_index in 0..6 {
             assert_eq!(
                 StreamDeckType::Xl.image_package_header(700, btn_index, 1)[2],
+                btn_index.clone()
+            );
+            assert_eq!(
+                StreamDeckType::MK2.image_package_header(700, btn_index, 1)[2],
                 btn_index.clone()
             );
             assert_eq!(
@@ -431,6 +468,15 @@ mod tests {
             );
             assert_eq!(
                 StreamDeckType::Xl.image_package_header(700, 1, page_number)[7],
+                (page_number >> 8) as u8
+            );
+
+            assert_eq!(
+                StreamDeckType::MK2.image_package_header(700, 1, page_number)[6],
+                (page_number & 0xFF) as u8
+            );
+            assert_eq!(
+                StreamDeckType::MK2.image_package_header(700, 1, page_number)[7],
                 (page_number >> 8) as u8
             );
 
@@ -470,6 +516,10 @@ mod tests {
             ImageTransformation::Rotate180
         );
         assert_eq!(
+            StreamDeckType::MK2.button_image_transformation(),
+            ImageTransformation::Rotate180
+        );
+        assert_eq!(
             StreamDeckType::OrigV2.button_image_transformation(),
             ImageTransformation::Rotate180
         );
@@ -486,6 +536,7 @@ mod tests {
     #[test]
     fn test_max_payload_size() {
         assert_eq!(StreamDeckType::Xl.max_payload_size(), 1024 - 8);
+        assert_eq!(StreamDeckType::MK2.max_payload_size(), 1024 - 8);
         assert_eq!(StreamDeckType::OrigV2.max_payload_size(), 1024 - 8);
         assert_eq!(StreamDeckType::Orig.max_payload_size(), 7803);
         assert_eq!(StreamDeckType::Mini.max_payload_size(), 7803);
@@ -494,6 +545,7 @@ mod tests {
     #[test]
     fn test_button_read_offset() {
         assert_eq!(StreamDeckType::Xl.button_read_offset(), 4);
+        assert_eq!(StreamDeckType::MK2.button_read_offset(), 4);
         assert_eq!(StreamDeckType::OrigV2.button_read_offset(), 4);
         assert_eq!(StreamDeckType::Orig.button_read_offset(), 1);
         assert_eq!(StreamDeckType::Mini.button_read_offset(), 1);

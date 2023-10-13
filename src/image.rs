@@ -169,6 +169,9 @@ mod tests {
                 StreamDeckType::Xl => {
                     assert_eq!(packages.len(), 1)
                 }
+                StreamDeckType::MK2 => {
+                    assert_eq!(packages.len(), 1)
+                }
                 StreamDeckType::OrigV2 => {
                     assert_eq!(packages.len(), 1)
                 }
