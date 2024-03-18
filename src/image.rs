@@ -42,14 +42,14 @@ pub fn image_packages(
             image.as_bytes(),
             device_type.button_image_size().0,
             device_type.button_image_size().1,
-            ColorType::Rgb8,
+            ColorType::Rgb8.into(),
         ),
         StreamDeckImageFormat::Jpeg => JpegEncoder::new_with_quality(&mut encoded_image, 100)
             .encode(
                 image.as_bytes(),
                 device_type.button_image_size().0,
                 device_type.button_image_size().1,
-                ColorType::Rgb8,
+                ColorType::Rgb8.into(),
             ),
     };
     if let ImageResult::Err(e) = encode_result {
