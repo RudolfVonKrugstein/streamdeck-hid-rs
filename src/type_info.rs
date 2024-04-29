@@ -5,7 +5,7 @@
 //!
 //! The type of the streamdeck is defined in the enum [StreamDeckType]
 
-use std::cmp::min;
+use std::{cmp::min, fmt};
 
 /// Type of Streamdeck device.
 ///
@@ -16,6 +16,17 @@ pub enum StreamDeckType {
     OrigV2,
     Orig,
     Mini,
+}
+
+impl fmt::Display for StreamDeckType {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            StreamDeckType::Xl => write!(f, "XL"),
+            StreamDeckType::OrigV2 => write!(f, "Original v2"),
+            StreamDeckType::Orig => write!(f, "Original"),
+            StreamDeckType::Mini => write!(f, "Mini"),
+        }
+    }
 }
 
 /// The image formats a Streamdeck can use.

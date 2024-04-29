@@ -41,6 +41,21 @@ pub struct StreamDeckDevice<API: HidApiTrait> {
     hid_device: API::HidDevice,
 }
 
+impl fmt::Display for StreamDeckDevice<hidapi::HidApi> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let dinfo = self.hid_device.get_device_info();
+        let did = match dinfo {
+            Ok(x) => {
+                let vid = x.vendor_id();
+                let pid = x.product_id();
+                format!("vid: {:#06x}, pid: {:#06x}", vid, pid)
+            },
+            Err(_) => format!("")
+        };
+        write!(f, "Streamdeck device: {}", did)
+    }
+}
+
 unsafe impl Sync for StreamDeckDevice<hidapi::HidApi> {}
 
 impl<API: HidApiTrait> StreamDeckDevice<API> {
