@@ -1,3 +1,5 @@
+use std::fmt;
+
 use crate::hid_api_traits::*;
 use crate::image::image_packages;
 use crate::StreamDeckError;
@@ -12,11 +14,26 @@ pub enum ButtonState {
     Up,
 }
 
+impl fmt::Display for ButtonState {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            ButtonState::Down => write!(f, "Down"),
+            ButtonState::Up => write!(f, "Up"),
+        }
+    }
+}
+
 /// Event send, when a button changes its state!
 #[derive(Debug, Clone)]
 pub struct ButtonEvent {
     pub button_id: u32,
     pub state: ButtonState,
+}
+
+impl fmt::Display for ButtonEvent {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "Button-Id: {}, State: {}", self.button_id, self.state)
+    }
 }
 
 pub struct StreamDeckDevice<API: HidApiTrait> {
