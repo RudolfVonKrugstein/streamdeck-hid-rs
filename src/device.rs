@@ -8,7 +8,7 @@ use image::RgbImage;
 use log::debug;
 
 /// The state a button can be in or change to.
-#[derive(Clone, PartialEq, Debug)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub enum ButtonState {
     Down,
     Up,
@@ -24,7 +24,7 @@ impl fmt::Display for ButtonState {
 }
 
 /// Event send, when a button changes its state!
-#[derive(Debug, Clone)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub struct ButtonEvent {
     pub button_id: u32,
     pub state: ButtonState,
@@ -36,6 +36,7 @@ impl fmt::Display for ButtonEvent {
     }
 }
 
+#[derive(Clone, Debug, PartialEq)]
 pub struct StreamDeckDevice<API: HidApiTrait> {
     pub device_type: StreamDeckType,
     hid_device: API::HidDevice,
