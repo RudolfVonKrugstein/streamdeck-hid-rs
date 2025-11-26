@@ -1,7 +1,7 @@
 //! Module to create packages for images send to streamdeck devices.
 
 use crate::ImageTransformation::{Rotate180, Rotate270};
-use crate::{Error, StreamDeckImageFormat, StreamDeckType};
+use crate::{StreamDeckError, StreamDeckImageFormat, StreamDeckType};
 use image::codecs::bmp::BmpEncoder;
 use image::codecs::jpeg::JpegEncoder;
 use image::{imageops, ColorType, EncodableLayout, ImageResult, RgbImage};
@@ -18,12 +18,12 @@ pub fn image_packages(
     device_type: StreamDeckType,
     image: &RgbImage,
     btn_index: u8,
-) -> Result<Vec<Vec<u8>>, Error> {
+) -> Result<Vec<Vec<u8>>, StreamDeckError> {
     // Check image dimensions
     if image.width() != device_type.button_image_size().0
         || image.height() != device_type.button_image_size().1
     {
-        return Err(Error::DimensionMismatch(
+        return Err(StreamDeckError::DimensionMismatch(
             device_type.button_image_size().0,
             device_type.button_image_size().1,
         ));
@@ -53,7 +53,7 @@ pub fn image_packages(
             ),
     };
     if let ImageResult::Err(e) = encode_result {
-        return Err(Error::ImageEncodingError(e));
+        return Err(StreamDeckError::ImageEncodingError(e));
     }
     // The resulting list of packages
     let mut result: Vec<Vec<u8>> = Vec::new();

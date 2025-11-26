@@ -1,6 +1,6 @@
 use crate::hid_api_traits::*;
 use crate::image::image_packages;
-use crate::Error;
+use crate::StreamDeckError;
 use crate::StreamDeckType;
 use image::RgbImage;
 use log::debug;
@@ -103,7 +103,10 @@ impl<API: HidApiTrait> StreamDeckDevice<API> {
     ///     }
     /// }
     /// ```
-    pub fn open(api: &API, device_info: &API::DeviceInfo) -> Result<StreamDeckDevice<API>, Error> {
+    pub fn open(
+        api: &API,
+        device_info: &API::DeviceInfo,
+    ) -> Result<StreamDeckDevice<API>, StreamDeckError> {
         let device_type = StreamDeckType::from_vendor_and_product_id(
             device_info.vendor_id(),
             device_info.product_id(),
@@ -111,13 +114,13 @@ impl<API: HidApiTrait> StreamDeckDevice<API> {
         if let Some(device_type) = device_type {
             let hid_device = api
                 .open(device_type.get_vendor_id(), device_type.get_product_id())
-                .map_err(Error::HidError)?;
+                .map_err(StreamDeckError::HidError)?;
             Ok(StreamDeckDevice {
                 hid_device,
                 device_type,
             })
         } else {
-            Err(Error::NotAStreamDeckDevice)
+            Err(StreamDeckError::NotAStreamDeckDevice)
         }
     }
 
@@ -148,12 +151,12 @@ impl<API: HidApiTrait> StreamDeckDevice<API> {
     ///     // ... do something with device ...
     /// }
     /// ```
-    pub fn open_first_device(api: &API) -> Result<StreamDeckDevice<API>, Error> {
+    pub fn open_first_device(api: &API) -> Result<StreamDeckDevice<API>, StreamDeckError> {
         let mut all_devices = StreamDeckDevice::list_devices(api);
         if !all_devices.is_empty() {
             return StreamDeckDevice::open(api, &all_devices.remove(0).1);
         }
-        Err(Error::NoDeviceFound)
+        Err(StreamDeckError::NoDeviceFound)
     }
 
     /// Set the brightness of the device.
@@ -174,10 +177,10 @@ impl<API: HidApiTrait> StreamDeckDevice<API> {
     ///     device.set_brightness(0);
     /// }
     /// ```
-    pub fn set_brightness(&self, brightness: u8) -> Result<(), Error> {
+    pub fn set_brightness(&self, brightness: u8) -> Result<(), StreamDeckError> {
         self.hid_device
             .send_feature_report(&self.device_type.brightness_packet(brightness))
-            .map_err(Error::HidError)?;
+            .map_err(StreamDeckError::HidError)?;
         Ok(())
     }
 
@@ -199,13 +202,13 @@ impl<API: HidApiTrait> StreamDeckDevice<API> {
     ///     // More things with the device
     /// }
     /// ```
-    pub fn reset(&self) -> Result<(), Error> {
+    pub fn reset(&self) -> Result<(), StreamDeckError> {
         self.hid_device
             .write(&self.device_type.reset_key_stream_packet())
-            .map_err(Error::HidError)?;
+            .map_err(StreamDeckError::HidError)?;
         self.hid_device
             .send_feature_report(self.device_type.reset_packet())
-            .map_err(Error::HidError)?;
+            .map_err(StreamDeckError::HidError)?;
         Ok(())
     }
 
@@ -231,16 +234,16 @@ impl<API: HidApiTrait> StreamDeckDevice<API> {
     ///     // More things with the device
     /// }
     /// ```
-    pub fn set_button_image(&self, button_id: u8, image: &RgbImage) -> Result<(), Error> {
+    pub fn set_button_image(&self, button_id: u8, image: &RgbImage) -> Result<(), StreamDeckError> {
         let image_packages = image_packages(self.device_type.clone(), image, button_id)?;
         for image_package in image_packages {
             let image_package_len = image_package.len();
             let result = self
                 .hid_device
                 .write(&image_package)
-                .map_err(Error::HidError)?;
+                .map_err(StreamDeckError::HidError)?;
             if result != image_package_len {
-                return Err(Error::IncorrectWriteLengthError);
+                return Err(StreamDeckError::IncorrectWriteLengthError);
             }
         }
         Ok(())
@@ -265,7 +268,7 @@ impl<API: HidApiTrait> StreamDeckDevice<API> {
     ///     // }).unwrap();
     /// }
     ///
-    pub fn on_button_events<F>(&self, cb: F) -> Result<(), Error>
+    pub fn on_button_events<F>(&self, cb: F) -> Result<(), StreamDeckError>
     where
         F: Fn(ButtonEvent),
     {
@@ -278,7 +281,7 @@ impl<API: HidApiTrait> StreamDeckDevice<API> {
         loop {
             match self.hid_device.read(&mut inbuffer) {
                 Result::Ok(_) => {}
-                Result::Err(e) => return Err(Error::HidError(e)),
+                Result::Err(e) => return Err(StreamDeckError::HidError(e)),
             };
             debug!("Streamdeck read: {:?}", inbuffer);
             for button_id in 0..self.device_type.total_num_buttons() {
@@ -307,7 +310,7 @@ mod tests {
     #[allow(unused_imports)]
     use super::*;
     #[allow(unused_imports)]
-    use crate::Error::HidError;
+    use crate::StreamDeckError::HidError;
     #[allow(unused_imports)]
     use mockall::predicate::*;
     #[allow(unused_imports)]
