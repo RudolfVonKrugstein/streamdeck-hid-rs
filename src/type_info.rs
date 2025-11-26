@@ -23,6 +23,7 @@ impl fmt::Display for StreamDeckType {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
             StreamDeckType::Xl => write!(f, "XL"),
+            StreamDeckType::MK2 => write!(f, "MK2"),
             StreamDeckType::OrigV2 => write!(f, "Original v2"),
             StreamDeckType::Orig => write!(f, "Original"),
             StreamDeckType::Mini => write!(f, "Mini"),
