@@ -50,8 +50,8 @@ impl fmt::Display for StreamDeckDevice<hidapi::HidApi> {
                 let vid = x.vendor_id();
                 let pid = x.product_id();
                 format!("vid: {:#06x}, pid: {:#06x}", vid, pid)
-            },
-            Err(_) => format!("")
+            }
+            Err(_) => format!(""),
         };
         write!(f, "Streamdeck device: {}", did)
     }
