@@ -1,3 +1,5 @@
+use std::fmt;
+
 use crate::hid_api_traits::*;
 use crate::image::image_packages;
 use crate::StreamDeckError;
@@ -12,6 +14,15 @@ pub enum ButtonState {
     Up,
 }
 
+impl fmt::Display for ButtonState {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            ButtonState::Down => write!(f, "Down"),
+            ButtonState::Up => write!(f, "Up"),
+        }
+    }
+}
+
 /// Event send, when a button changes its state!
 #[derive(Debug, Clone)]
 pub struct ButtonEvent {
@@ -19,9 +30,30 @@ pub struct ButtonEvent {
     pub state: ButtonState,
 }
 
+impl fmt::Display for ButtonEvent {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "Button-Id: {}, State: {}", self.button_id, self.state)
+    }
+}
+
 pub struct StreamDeckDevice<API: HidApiTrait> {
     pub device_type: StreamDeckType,
     hid_device: API::HidDevice,
+}
+
+impl fmt::Display for StreamDeckDevice<hidapi::HidApi> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let dinfo = self.hid_device.get_device_info();
+        let did = match dinfo {
+            Ok(x) => {
+                let vid = x.vendor_id();
+                let pid = x.product_id();
+                format!("vid: {:#06x}, pid: {:#06x}", vid, pid)
+            },
+            Err(_) => format!("")
+        };
+        write!(f, "Streamdeck device: {}", did)
+    }
 }
 
 unsafe impl Sync for StreamDeckDevice<hidapi::HidApi> {}
