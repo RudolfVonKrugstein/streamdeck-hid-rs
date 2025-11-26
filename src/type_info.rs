@@ -10,7 +10,7 @@ use std::{cmp::min, fmt};
 /// Type of Streamdeck device.
 ///
 /// This enum defined the types of Streamdeck devices known to this library.
-#[derive(PartialEq, Debug, Clone)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub enum StreamDeckType {
     Xl,
     MK2,
@@ -34,7 +34,7 @@ impl fmt::Display for StreamDeckType {
 ///
 /// The streamdecks uses different image formats depending on the
 /// type.
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub enum StreamDeckImageFormat {
     Jpeg,
     Bmp,
@@ -43,7 +43,7 @@ pub enum StreamDeckImageFormat {
 /// The transformation an image needs to make to be correctly displayed on the screen.
 ///
 /// This enum contains only those transformations ever needed on streamdecks.
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub enum ImageTransformation {
     Rotate180,
     Rotate270,
